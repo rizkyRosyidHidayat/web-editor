@@ -4,7 +4,7 @@
 	import ContentSelected from '#lib/components/global/ContentSelected.svelte';
 
 	let frame = $state<HTMLIFrameElement>();
-	let previewUrl = $state('http://localhost:5173');
+	let previewUrl = $state('https://dnd-rust-mu.vercel.app/');
 	let siteName = $state('Northstar Digital');
 	let siteId = $state('demo-company-site');
 	let fields = $state<Field[]>([]);
@@ -400,7 +400,7 @@
 
 	<!-- Settings Tray -->
 	{#if showSettings}
-		<section class="animate-in fade-in slide-in-from-top-2 border-b border-white/10 bg-[#11141e]">
+		<section class="animate-in border-b border-white/10 bg-[#11141e] fade-in slide-in-from-top-2">
 			<div
 				class="mx-auto grid max-w-[1800px] gap-3 px-4 py-4 md:grid-cols-[1fr_220px_auto] lg:px-6"
 			>
