@@ -20,11 +20,8 @@
 
 <div class="space-y-2">
 	<div class="flex items-center justify-between">
-		<Label
-			for="field-link-value"
-			class="flex items-center gap-1.5 text-xs font-medium text-slate-300"
-		>
-			<LinkIcon class="h-3.5 w-3.5 text-indigo-400" />
+		<Label for="field-link-value">
+			<LinkIcon class="h-3.5 w-3.5 text-primary" />
 			<span>{label}</span>
 		</Label>
 
@@ -32,7 +29,7 @@
 			<button
 				type="button"
 				onclick={() => window.open(value, '_blank', 'noopener,noreferrer')}
-				class="flex items-center gap-1 text-[11px] text-indigo-400 transition-colors hover:text-indigo-300"
+				class="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
 			>
 				<span>Test link</span>
 				<ExternalLink class="h-3 w-3" />
@@ -45,21 +42,16 @@
 		type="text"
 		{value}
 		oninput={(event) => oninput(event.currentTarget.value)}
-		class={`h-9 rounded-xl bg-black/30 px-3.5 py-2.5 text-sm text-slate-100 transition-colors placeholder:text-slate-600 ${
-			!isLinkValid
-				? 'border-amber-400/50 focus-visible:border-amber-400 focus-visible:ring-amber-400/30'
-				: 'border-white/10 focus-visible:border-indigo-400 focus-visible:ring-indigo-400/40'
-		}`}
 		placeholder="/about, https://example.com, mailto:hi@test.com"
 	/>
 
 	{#if !isLinkValid}
-		<p class="flex items-center gap-1.5 text-[11px] text-amber-400/90">
+		<p class="flex items-center gap-1.5 text-[11px] text-destructive">
 			<AlertTriangle class="h-3.5 w-3.5 shrink-0" />
 			Must start with relative (/ or #), https://, http://, mailto:, or tel:
 		</p>
 	{:else}
-		<p class="text-[10px] text-slate-500">
+		<p class="text-[10px] text-muted-foreground">
 			Supports relative paths (/contact), absolute URLs, mailto:, or tel:
 		</p>
 	{/if}

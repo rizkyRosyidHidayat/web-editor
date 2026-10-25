@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { isChildMessage, parentMessage, type ChildMessage, type Field } from '#lib/protocol.ts';
 	import ContentSelected from '#lib/components/global/ContentSelected.svelte';
+	import Button from '#lib/components/ui/button/button.svelte';
 
 	let frame = $state<HTMLIFrameElement>();
 	let previewUrl = $state('https://dnd-rust-mu.vercel.app/');
@@ -39,17 +40,6 @@
 	function post(message: unknown) {
 		if (!frame?.contentWindow || !frameOrigin) return;
 		frame.contentWindow.postMessage(message, frameOrigin);
-	}
-
-	function toggleEditMode() {
-		editMode = !editMode;
-		post(parentMessage('SET_EDIT_MODE', { enabled: editMode }));
-		setStatus(
-			editMode
-				? 'Edit mode enabled — click elements in preview.'
-				: 'Preview mode — links and buttons are active.',
-			'good'
-		);
 	}
 
 	function updateFieldValue(id: string, value: string) {
@@ -249,20 +239,20 @@
 	/>
 </svelte:head>
 
-<div class="flex min-h-screen flex-col bg-[#0a0c12] text-slate-100">
+<div class="flex min-h-screen flex-col">
 	<!-- Top Navigation Header -->
-	<header class="sticky top-0 z-30 border-b border-white/10 bg-[#0a0c12]/95 backdrop-blur-xl">
+	<header class="sticky top-0 z-30 border-b bg-background backdrop-blur-xl">
 		<div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-6">
 			<!-- Logo & Site Info -->
 			<div class="flex items-center gap-3">
 				<div
-					class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15 text-lg text-indigo-300 ring-1 ring-indigo-300/20"
+					class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-lg text-primary ring-1 ring-primary/20"
 				>
 					▤
 				</div>
 				<div>
 					<h1 class="text-sm font-semibold tracking-tight">
-						Framecraft <span class="text-indigo-300">Studio</span>
+						Framecraft <span class="text-primary">Studio</span>
 					</h1>
 					<div class="flex items-center gap-1.5">
 						<span
@@ -277,104 +267,60 @@
 
 			<!-- Center Controls: Edit Mode Toggle & Viewport Switcher -->
 			<div class="flex items-center gap-2">
-				<!-- Edit Mode Toggle -->
-				<button
-					type="button"
-					class={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
-						editMode
-							? 'border-indigo-500/40 bg-indigo-500/20 text-indigo-200 shadow-sm shadow-indigo-500/10'
-							: 'border-white/10 bg-black/20 text-slate-400 hover:text-white'
-					}`}
-					onclick={toggleEditMode}
-					title={editMode
-						? 'Edit Mode active (click to preview)'
-						: 'Preview Mode active (click to edit)'}
-				>
-					<span
-						class={`h-2 w-2 rounded-full ${editMode ? 'animate-pulse bg-indigo-400' : 'bg-slate-500'}`}
-					></span>
-					<span>{editMode ? 'Edit Mode' : 'Preview Mode'}</span>
-				</button>
-
 				<!-- Viewport Buttons -->
-				<div class="flex items-center gap-1 rounded-lg border border-white/8 bg-black/20 p-1">
-					<button
+				<div class="flex items-center gap-1">
+					<Button
 						type="button"
-						class={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-							viewport === 'desktop'
-								? 'bg-white/10 font-medium text-white'
-								: 'text-slate-400 hover:text-slate-200'
-						}`}
-						onclick={() => (viewport = 'desktop')}>Desktop</button
+						variant={viewport === 'desktop' ? 'default' : 'outline'}
+						size="sm"
+						onclick={() => (viewport = 'desktop')}>Desktop</Button
 					>
-					<button
+					<Button
 						type="button"
-						class={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-							viewport === 'tablet'
-								? 'bg-white/10 font-medium text-white'
-								: 'text-slate-400 hover:text-slate-200'
-						}`}
-						onclick={() => (viewport = 'tablet')}>Tablet</button
+						variant={viewport === 'tablet' ? 'default' : 'outline'}
+						size="sm"
+						onclick={() => (viewport = 'tablet')}>Tablet</Button
 					>
-					<button
+					<Button
 						type="button"
-						class={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-							viewport === 'mobile'
-								? 'bg-white/10 font-medium text-white'
-								: 'text-slate-400 hover:text-slate-200'
-						}`}
-						onclick={() => (viewport = 'mobile')}>Mobile</button
+						variant={viewport === 'mobile' ? 'default' : 'outline'}
+						size="sm"
+						onclick={() => (viewport = 'mobile')}>Mobile</Button
 					>
-					<button
+					<Button
 						type="button"
-						class="rounded-md px-2 py-1 text-xs text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
+						variant="outline"
+						size="sm"
 						onclick={loadPreview}
 						title="Reload preview"
 					>
 						↻
-					</button>
+					</Button>
 				</div>
 			</div>
 
 			<!-- Right Actions: Save, Restore, Publish -->
 			<div class="flex items-center gap-2">
-				<button
+				<Button
 					type="button"
-					class="hidden rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:bg-white/5 sm:inline-flex"
+					variant="outline"
+					size="sm"
 					onclick={() => (showSettings = !showSettings)}
 				>
 					⚙ Settings
-				</button>
-				<button
-					type="button"
-					class="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:bg-white/5"
-					onclick={restoreDraft}
-				>
+				</Button>
+				<Button type="button" variant="outline" size="sm" onclick={restoreDraft}>
 					Restore draft
-				</button>
-				<button
-					type="button"
-					class={`relative rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
-						dirty
-							? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-400'
-							: 'bg-white/10 text-slate-300 hover:bg-white/15'
-					}`}
-					onclick={saveDraft}
-				>
+				</Button>
+				<Button type="button" variant={dirty ? 'default' : 'outline'} size="sm" onclick={saveDraft}>
 					{#if dirty}
 						<span
 							class="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-[#0a0c12]"
 						></span>
 					{/if}
 					Save draft
-				</button>
-				<button
-					type="button"
-					class="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/20 transition-colors hover:bg-emerald-500"
-					onclick={publishDemo}
-				>
-					Publish
-				</button>
+				</Button>
+				<Button type="button" variant="default" size="sm" onclick={publishDemo}>Publish</Button>
 			</div>
 		</div>
 
@@ -387,13 +333,7 @@
 					<span class="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
 					<span>{notice}</span>
 				</div>
-				<button
-					type="button"
-					class="px-1 text-xs text-indigo-400 hover:text-white"
-					onclick={() => (notice = '')}
-				>
-					✕
-				</button>
+				<Button type="button" variant="outline" size="sm" onclick={() => (notice = '')}>✕</Button>
 			</div>
 		{/if}
 	</header>

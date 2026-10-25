@@ -19,15 +19,12 @@
 
 <div class="space-y-2">
 	<div class="flex items-center justify-between">
-		<Label
-			for="field-textarea-value"
-			class="flex items-center gap-1.5 text-xs font-medium text-slate-300"
-		>
-			<AlignLeft class="h-3.5 w-3.5 text-indigo-400" />
+		<Label for="field-textarea-value">
+			<AlignLeft class="h-3.5 w-3.5 text-primary" />
 			<span>{label}</span>
 		</Label>
 		<span
-			class={`font-mono text-[11px] ${isOverMaxLength ? 'font-semibold text-red-400' : 'text-slate-500'}`}
+			class={`font-mono text-[11px] ${isOverMaxLength ? 'font-semibold text-red-400' : 'text-muted-foreground'}`}
 		>
 			{charCount}{maxLength ? ` / ${maxLength}` : ' chars'}
 		</span>
@@ -40,6 +37,5 @@
 		{value}
 		oninput={(event) => oninput(event.currentTarget.value)}
 		placeholder="Enter text..."
-		class="resize-y rounded-xl border-white/10 bg-black/30 px-3.5 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-600 focus-visible:border-indigo-400 focus-visible:ring-indigo-400/40"
 	/>
 </div>

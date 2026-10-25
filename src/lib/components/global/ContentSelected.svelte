@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Field } from '#lib/protocol.ts';
+	import * as Card from '#lib/components/ui/card/index.js';
 	import {
 		ContentSelectedHeader,
 		ContentSelectedFooter,
@@ -42,9 +43,7 @@
 
 <!-- Floating Inspector Dock -->
 <div class="fixed bottom-6 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4 sm:px-6">
-	<div
-		class="overflow-hidden rounded-2xl border border-white/12 bg-[#10131b]/95 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl"
-	>
+	<Card.Root class="gap-0">
 		<!-- Header -->
 		<ContentSelectedHeader {selected} {isModified} {onreset} {onclose} />
 
@@ -78,5 +77,5 @@
 
 		<!-- Footer -->
 		<ContentSelectedFooter {onclose} />
-	</div>
+	</Card.Root>
 </div>
