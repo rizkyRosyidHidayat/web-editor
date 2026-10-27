@@ -3,6 +3,7 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { supabase } from '#lib/utils.js';
+	import { deleteImageFromStorage } from './storage.ts';
 	import UploadIcon from '@lucide/svelte/icons/upload';
 	import ImageIcon from '@lucide/svelte/icons/image';
 	import Trash2Icon from '@lucide/svelte/icons/trash-2';
@@ -11,17 +12,27 @@
 	import AlertCircleIcon from '@lucide/svelte/icons/alert-circle';
 
 	interface Props {
+		folder?: 'articles' | string;
 		imageUrl?: string;
+		oldImageUrl?: string;
 		onchange?: (url: string) => void;
+		ondelete?: (url: string) => void;
 	}
 
-	let { imageUrl = $bindable(''), onchange }: Props = $props();
+	let {
+		imageUrl = $bindable(''),
+		folder = 'articles',
+		oldImageUrl = '',
+		onchange,
+		ondelete
+	}: Props = $props();
 
 	let fileInputRef = $state<HTMLInputElement | null>(null);
 	let isUploading = $state(false);
 	let uploadError = $state<string | null>(null);
 	let isUrlMode = $state(false);
 	let manualUrl = $derived(imageUrl);
+	let sessionUploads = $state<string[]>([]);
 
 	function handleFileSelect(event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -54,11 +65,10 @@
 				.replace(/[^a-zA-Z0-9_-]/g, '_')
 				.substring(0, 30);
 			const fileName = `${Date.now()}-${sanitizedBase}.${fileExt}`;
-			const filePath = `${fileName}`;
 
-			const { error } = await supabase.storage.from('articles').upload(filePath, file, {
+			const { data, error } = await supabase.storage.from(folder).upload(fileName, file, {
 				cacheControl: '3600',
-				upsert: false
+				upsert: true
 			});
 
 			if (error) {
@@ -66,12 +76,27 @@
 				return;
 			}
 
-			const { data: publicUrlData } = supabase.storage.from('articles').getPublicUrl(filePath);
+			const { data: publicUrlData } = supabase.storage.from(folder).getPublicUrl(data.path);
 
 			if (publicUrlData?.publicUrl) {
-				imageUrl = publicUrlData.publicUrl;
-				manualUrl = imageUrl;
-				onchange?.(imageUrl);
+				const previousSessionUrl = imageUrl;
+				const newUrl = publicUrlData.publicUrl;
+
+				// If the previously active image was uploaded during this session, delete it to prevent orphaned files
+				if (
+					previousSessionUrl &&
+					previousSessionUrl !== oldImageUrl &&
+					sessionUploads.includes(previousSessionUrl) &&
+					previousSessionUrl !== newUrl
+				) {
+					await deleteImageFromStorage(previousSessionUrl, folder);
+					sessionUploads = sessionUploads.filter((u) => u !== previousSessionUrl);
+				}
+
+				sessionUploads = [...sessionUploads, newUrl];
+				imageUrl = newUrl;
+				manualUrl = newUrl;
+				onchange?.(newUrl);
 			}
 		} catch (err: unknown) {
 			uploadError = err instanceof Error ? err.message : 'Failed to upload image';
@@ -83,7 +108,8 @@
 		}
 	}
 
-	function removeImage() {
+	async function removeImage() {
+		const currentUrl = imageUrl;
 		imageUrl = '';
 		manualUrl = '';
 		uploadError = null;
@@ -91,10 +117,32 @@
 		if (fileInputRef) {
 			fileInputRef.value = '';
 		}
+
+		// If this image was uploaded during this session, delete it from storage immediately
+		if (currentUrl && currentUrl !== oldImageUrl && sessionUploads.includes(currentUrl)) {
+			await deleteImageFromStorage(currentUrl, folder);
+			sessionUploads = sessionUploads.filter((u) => u !== currentUrl);
+		}
+
+		ondelete?.(currentUrl);
 	}
 
-	function applyManualUrl() {
-		imageUrl = manualUrl.trim();
+	async function applyManualUrl() {
+		const trimmed = manualUrl.trim();
+		const currentUrl = imageUrl;
+
+		// Clean up any uncommitted upload from this session if replaced with manual URL
+		if (
+			currentUrl &&
+			currentUrl !== oldImageUrl &&
+			sessionUploads.includes(currentUrl) &&
+			currentUrl !== trimmed
+		) {
+			await deleteImageFromStorage(currentUrl, folder);
+			sessionUploads = sessionUploads.filter((u) => u !== currentUrl);
+		}
+
+		imageUrl = trimmed;
 		uploadError = null;
 		onchange?.(imageUrl);
 	}

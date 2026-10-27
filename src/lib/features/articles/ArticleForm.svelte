@@ -1,12 +1,11 @@
 <script lang="ts">
 	import type { Articles, ArticlesPayload } from './article.type.js';
-	import ImageUploader from './ImageUploader.svelte';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
-	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Label } from '#lib/components/ui/label/index.js';
+	import { RichTextEditor } from '#lib/components/ui/rich-text-editor/index.js';
 	import { supabase } from '#lib/utils.js';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
@@ -15,6 +14,7 @@
 	import CheckCircle2Icon from '@lucide/svelte/icons/check-circle-2';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import LogInIcon from '@lucide/svelte/icons/log-in';
+	import { ImageUploader, deleteImageFromStorage } from '#lib/components/ui/image-uploader/index.js';
 
 	interface Props {
 		initialData?: Articles | null;
@@ -30,6 +30,7 @@
 	let author = $state('');
 	let readTime = $state<number | string>(5);
 	let image = $state('');
+	let initialImage = $state('');
 	let content = $state('');
 
 	let isSubmitting = $state(false);
@@ -45,6 +46,7 @@
 			author = initialData.author || '';
 			readTime = initialData.read_time ?? 5;
 			image = initialData.image || '';
+			initialImage = initialData.image || '';
 			content = initialData.content || '';
 		}
 	});
@@ -95,7 +97,8 @@
 			errorMessage = 'Read time must be at least 1 minute.';
 			return;
 		}
-		if (!trimmedContent) {
+		const strippedContent = content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+		if (!strippedContent && !content.includes('<img')) {
 			errorMessage = 'Article content is required.';
 			return;
 		}
@@ -124,6 +127,9 @@
 			};
 
 			if (isUpdate && initialData?.id) {
+				const oldImage = initialImage || initialData.image || '';
+				const hasImageChanged = Boolean(oldImage && oldImage !== payload.image);
+
 				const { data, error } = await supabase
 					.from('articles')
 					.update({
@@ -141,6 +147,15 @@
 				if (error) {
 					errorMessage = error.message;
 					return;
+				}
+
+				// If image was changed when updating article, delete old image from Supabase storage
+				if (hasImageChanged) {
+					const { error: storageError } = await deleteImageFromStorage(oldImage, 'articles');
+					if (storageError) {
+						console.warn('Could not delete old image from Supabase storage:', storageError.message);
+					}
+					initialImage = payload.image;
 				}
 
 				successMessage = 'Article updated successfully!';
@@ -303,18 +318,17 @@
 				<!-- Image Upload -->
 				<div class="flex flex-col gap-2">
 					<Label class="font-semibold">Featured Image</Label>
-					<ImageUploader bind:imageUrl={image} />
+					<ImageUploader folder="articles" bind:imageUrl={image} oldImageUrl={initialImage} />
 				</div>
 
 				<!-- Content -->
 				<div class="flex flex-col gap-2">
 					<Label for="content" class="font-semibold">Article Content</Label>
-					<Textarea
+					<RichTextEditor
 						id="content"
-						rows={12}
-						placeholder="Write the full article content here. HTML or markdown text is supported..."
-						bind:value={content}
-						required
+						placeholder="Write the full article content here. Rich text formatting is supported..."
+						bind:content
+						disabled={isSubmitting}
 					/>
 				</div>
 
